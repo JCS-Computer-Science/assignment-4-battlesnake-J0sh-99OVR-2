@@ -55,4 +55,4 @@ export default function move(gameState){
     
     console.log(`MOVE ${gameState.turn}: ${nextMove}`)
     return { move: nextMove };
-}
+}  
