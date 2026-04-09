@@ -5,25 +5,21 @@ export default function move(gameState){
         left: true,
         right: true
     };
-    
-    // We've included code to prevent your Battlesnake from moving backwards
+   
     const myHead = gameState.you.body[0];
     const myNeck = gameState.you.body[1];
-    
-    if (myNeck.x < myHead.x) {        // Neck is left of head, don't move left
+   
+    if (myNeck.x < myHead.x) {
         moveSafety.left = false;
-        
-    } else if (myNeck.x > myHead.x) { // Neck is right of head, don't move right
+    } else if (myNeck.x > myHead.x) {
         moveSafety.right = false;
-        
-    } else if (myNeck.y < myHead.y) { // Neck is below head, don't move down
+    } else if (myNeck.y < myHead.y) {
         moveSafety.down = false;
-        
-    } else if (myNeck.y > myHead.y) { // Neck is above head, don't move up
+    } else if (myNeck.y > myHead.y) {
         moveSafety.up = false;
     }
-    
-  const boardWidth = gameState.board.width;
+   
+    const boardWidth = gameState.board.width;
     const boardHeight = gameState.board.height;
 
     if (myHead.x === 0) moveSafety.left = false;
@@ -35,20 +31,92 @@ export default function move(gameState){
 
     for (let i = 1; i < myBody.length; i++) {
         const part = myBody[i];
-  if (part.x === myHead.x && part.y === myHead.y + 1) moveSafety.up = false;
+        if (part.x === myHead.x && part.y === myHead.y + 1) moveSafety.up = false;
         if (part.x === myHead.x && part.y === myHead.y - 1) moveSafety.down = false;
         if (part.x === myHead.x - 1 && part.y === myHead.y) moveSafety.left = false;
         if (part.x === myHead.x + 1 && part.y === myHead.y) moveSafety.right = false;
     }
 
- const safeMoves = Object.keys(moveSafety).filter(dir => moveSafety[dir]);
+    const enemySnakes = gameState.board.snakes;
+
+    for(let i = 0; i < enemySnakes.length; i++){
+        const enemy = enemySnakes[i];
+
+        if(enemy.id === gameState.you.id) continue;
+
+        const enemyHead = enemy.body[0];
+
+        const dx = enemyHead.x - myHead.x;
+        const dy = enemyHead.y - myHead.y;
+
+        const distance = Math.abs(dx) + Math.abs(dy);
+
+        // if enemy is close, don't move toward it
+        if (distance <= 2) {
+            if (dx < 0) moveSafety.left = false;
+            if (dx > 0) moveSafety.right = false;
+            if (dy < 0) moveSafety.down = false;
+            if (dy > 0) moveSafety.up = false;
+        }
+
+
+        if (distance === 1) {
+            if (dx === -1) moveSafety.left = false;
+            if (dx === 1) moveSafety.right = false;
+            if (dy === -1) moveSafety.down = false;
+            if (dy === 1) moveSafety.up = false;
+        }
+    }
+
+
+    function countOpenSpaces(x, y) {
+    let count = 0;
+
+    if (x > 0) count++;
+    if (x < boardWidth - 1) count++;
+    if (y > 0) count++;
+    if (y < boardHeight - 1) count++;
+
+    // reduce for your own body
+    for (let i = 0; i < myBody.length; i++) {
+        const part = myBody[i];
+
+        if (part.x === x && part.y === y + 1) count--;
+        if (part.x === x && part.y === y - 1) count--;
+        if (part.x === x - 1 && part.y === y) count--;
+        if (part.x === x + 1 && part.y === y) count--;
+    }
+
+    return count;
+}
+
+// check each possible move
+if (moveSafety.up) {
+    let spaces = countOpenSpaces(myHead.x, myHead.y + 1);
+    if (spaces <= 1) moveSafety.up = false;
+}
+
+if (moveSafety.down) {
+    let spaces = countOpenSpaces(myHead.x, myHead.y - 1);
+    if (spaces <= 1) moveSafety.down = false;
+}
+
+if (moveSafety.left) {
+    let spaces = countOpenSpaces(myHead.x - 1, myHead.y);
+    if (spaces <= 1) moveSafety.left = false;
+}
+
+if (moveSafety.right) {
+    let spaces = countOpenSpaces(myHead.x + 1, myHead.y);
+    if (spaces <= 1) moveSafety.right = false;
+}
+
+    const safeMoves = Object.keys(moveSafety).filter(dir => moveSafety[dir]);
 
     if (safeMoves.length === 0) {
         console.log(`MOVE ${gameState.turn}: No safe moves`);
         return { move: "down" };
     }
-
-
 
     const food = gameState.board.food;
     let closestFood = null;
@@ -64,8 +132,6 @@ export default function move(gameState){
         }
     }
 
-   
-
     let nextMove = null;
 
     if (closestFood) {
@@ -80,7 +146,6 @@ export default function move(gameState){
         }
     }
 
-    // fallback
     if (!nextMove) {
         nextMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
     }
@@ -88,6 +153,8 @@ export default function move(gameState){
     console.log(`MOVE ${gameState.turn}: ${nextMove}`);
     return { move: nextMove };
 }
+
+
 
 
 
