@@ -1,4 +1,4 @@
-export default function move(gameState) {
+   export default function move(gameState) {
   const myHead = gameState.you.body[0];
   const myBody = gameState.you.body;
   const boardWidth = gameState.board.width;
